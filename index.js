@@ -7,8 +7,17 @@ app.use(express.json());
 // =========================
 // CONFIG
 // =========================
-const BOT_TOKEN = "NX4p9AXUuGHP6ZKbfLpg1LKTFoE-NfiODcyMEgTXn7zITLG8z6VuTdPHK0FhLTXAOs47RTKabYqz42O3fpZm8HKdMLsLAEOD1n9qMh82tnKFG6bfc0B06nf7J62TQ9uGDtWwLefcbYHyLGCVm4MWIqbm4ml5CRf7L34UPTuWmJikEtG0WXEWOWiMT2ku5C5MK5fTS_rZxb81Gs5mYLRI1s50O4IGGT4RErXyN9ruyIqKMt1Gd1h73mi9PtE17x003nWN8gq5amS_DJX3iIIaPYi70pMs9OqGB24wT9umZGmr8XvzbmAmNHSI8msbK_nj8MakBOXalrS9MsaEYdN_O7zrIJt3KTzbH7Tu2_5Yn5v-9LiFs2FMG79bNZFEPufmO7mgBj0yW7PbUH0DqMV4Db0eScDwnNVc5gz8xG0";
-const PORT = 3000;
+const BOT_TOKEN = "NsoOAGfstpbOPvue1tJKE5HWb2uS1PrY7n3V3mXYo1ma7yXfTd7p2oPaxqLrVzOIIclYP1m4qW5A4ineOM3r6c4jo5vWEVmmV2F8RYDH_74dIyKc8ZlWSH1Konmc9-825t_X53WLe5ywVU1E1XxP0Krmn1Tp7lL7KmopL5vyzmDjEFLgMo-r7ty_f4fxBBaaSKkhKMujhXvhN9fHPJ-kJcPwlnfbR_i5KGkvI6KQf00kTe1bVX-YUaq5XWjDOPTcI1U5UNHZpoLBTeqxOnYoKqPAh1iJ7-e4HtdkHMvfqo9oUvLjPYoC64StkqeHM_0k04lEV087-oWILBjTFpgm3IreinaKVx1d5WIBAK9hkpfxUlblHmt9EqDNr4qGFEOHB6dUTW1wp0C10T1g7tRt6m41mserCcrc8dCc3M3JFG";
+
+// ⚠️ QUAN TRỌNG: dùng PORT của Render
+const PORT = process.env.PORT || 3000;
+
+// =========================
+// ROUTE TEST (trang chủ)
+// =========================
+app.get("/", (req, res) => {
+  res.send("OK");
+});
 
 // =========================
 // Gửi tin nhắn về user
@@ -19,17 +28,17 @@ async function sendMessage(userId, text) {
       "https://openapi.zalo.me/v3.0/oa/message/cs",
       {
         recipient: {
-          user_id: userId
+          user_id: userId,
         },
         message: {
-          text: text
-        }
+          text: text,
+        },
       },
       {
         headers: {
           access_token: BOT_TOKEN,
-          "Content-Type": "application/json"
-        }
+          "Content-Type": "application/json",
+        },
       }
     );
   } catch (error) {
@@ -41,27 +50,33 @@ async function sendMessage(userId, text) {
 // Webhook nhận tin nhắn
 // =========================
 app.post("/webhook", async (req, res) => {
-  const event = req.body;
+  try {
+    const event = req.body;
 
-  console.log("Tin nhắn:", JSON.stringify(event, null, 2));
+    console.log("Tin nhắn:", JSON.stringify(event, null, 2));
 
-  const userId = event.sender?.id;
-  const message = event.message?.text?.toLowerCase();
+    const userId = event.sender?.id;
+    const message = event.message?.text?.toLowerCase();
 
-  if (!userId || !message) {
-    return res.sendStatus(200);
+    if (!userId || !message) {
+      return res.sendStatus(200);
+    }
+
+    if (message === "xin chào") {
+      await sendMessage(userId, "Chào bạn, mình là bot Zalo OA 👋");
+    }
+
+    // luôn trả 200 cho Zalo
+    res.sendStatus(200);
+  } catch (err) {
+    console.log("Webhook error:", err.message);
+    res.sendStatus(200);
   }
-
-  if (message === "xin chào") {
-    await sendMessage(userId, "Chào bạn, mình là bot Zalo OA 👋");
-  }
-
-  res.sendStatus(200);
 });
 
 // =========================
-// chạy server
+// CHẠY SERVER
 // =========================
 app.listen(PORT, () => {
-  console.log(`Bot chạy tại port ${PORT}`);
+  console.log("Bot chạy tại port " + PORT);
 });
